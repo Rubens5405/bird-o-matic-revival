@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Criador de Avatar - Seleção por Setas</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      background-color: #e0e0e0;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    /* =======================================================
+       QUADRO DO JOGO (800x800) COM CENTRALIZAÇÃO AUTOMÁTICA
+       ======================================================= */
+    .canvas-container {
+      position: relative;
+      width: 800px;
+      height: 800px;
+      background-color: #ffffff;
+      border: 5px solid #333;
+      border-radius: 12px;
+      box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+      overflow: hidden;
+      
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #camada-corpo {
+      position: relative;
+      width: 200px; 
+      max-width: 90%;     
+      max-height: 90%;
+      height: auto;
+      pointer-events: none;
+    }
+
+    .acessorio {
+      position: absolute;
+      height: auto;
+      z-index: 10;
+      pointer-events: none;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    /* ======================================================= */
+
+    /* Painel de Controle */
+    .painel {
+      margin-top: 25px;
+      width: 800px;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      border: 3px solid #333;
+      box-sizing: border-box;
+    }
+
+    .categoria-bloco {
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px dashed #ccc;
+    }
+
+    .categoria-bloco:last-of-type {
+      border-bottom: none;
+    }
+
+    h3 {
+      margin: 0 0 10px 0;
+      color: #555;
+      font-size: 16px;
+      text-transform: uppercase;
+    }
+
+    .grupo-botoes {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* ESTILO DOS SELETORES DE SETA */
+    .seletor-setas {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      background: #f5f5f5;
+      padding: 10px 15px;
+      border-radius: 8px;
+      border: 2px solid #ddd;
+      width: fit-content;
+    }
+
+    .label-item {
+      font-weight: bold;
+      font-size: 14px;
+      color: #333;
+      min-width: 120px;
+      text-align: center;
+    }
+
+    button {
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      border: 2px solid #333;
+      border-radius: 6px;
+      background-color: #fff;
+      user-select: none;
+    }
+
+    button:hover {
+      background-color: #eee;
+    }
+
+    .btn-seta {
+      background-color: #333;
+      color: white;
+      border-color: #222;
+      font-size: 16px;
+      padding: 6px 14px;
+    }
+
+    .btn-seta:hover {
+      background-color: #555;
+    }
+
+    .btn-download {
+      width: 100%;
+      padding: 15px;
+      font-size: 18px;
+      background-color: #2ecc71;
+      color: white;
+      border-color: #27ae60;
+      margin-top: 10px;
+    }
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+
+  <h1>Criador de Avatar</h1>
+
+  <div class="canvas-container" id="area-do-avatar">
+    <img id="camada-corpo" src="red.webp" alt="Corpo">
+    
+    <img id="camada-peitoral" class="acessorio" src="" alt="" style="display: none;">
+    <img id="camada-nariz" class="acessorio" src="" alt="" style="display: none;">
+    <img id="camada-bico" class="acessorio" src="" alt="" style="display: none;"> 
+    <img id="camada-oculos" class="acessorio" src="" alt="" style="display: none;">
+    <img id="camada-chapeu" class="acessorio" src="" alt="" style="display: none;">
+  </div>
+
+  <div class="painel">
+    <div class="categoria-bloco">
+      <h3>1. Escolha o Personagem</h3>
+      <div class="grupo-botoes">
+        <button onclick="trocarPersonagem('red', '200px')">Red Menor</button>
+        <button onclick="trocarPersonagem('chuck', '200px')">Chuck Maior</button>
+      </div>
+    </div>
+
+    <div class="categoria-bloco">
+      <h3>2. Chapéus</h3>
+      <div class="seletor-setas">
+        <button class="btn-seta" onclick="mudarItem('chapeu', -1)">&lt;</button>
+        <span class="label-item" id="label-chapeu">Nenhum</span>
+        <button class="btn-seta" onclick="mudarItem('chapeu', 1)">&gt;</button>
+      </div>
+    </div>
+
+    <div class="categoria-bloco">
+      <h3>3. Bicos</h3>
+      <div class="seletor-setas">
+        <button class="btn-seta" onclick="mudarItem('bico', -1)">&lt;</button>
+        <span class="label-item" id="label-bico">Nenhum</span>
+        <button class="btn-seta" onclick="mudarItem('bico', 1)">&gt;</button>
+      </div>
+    </div>
+
+    <div class="categoria-bloco">
+      <h3>4. Óculos</h3>
+      <div class="grupo-botoes">
+        <button class="remover" onclick="tirarItem('camada-oculos')">Nenhum</button>
+        <button onclick="colocarItem('camada-oculos', 'RED/oculos_teste.svg')">Óculos Exemplo</button>
+      </div>
+    </div>
+
+    <button class="btn-download" onclick="baixarPNG()">Baixar Personagem (PNG)</button>
+  </div>
+
+  <script>
+    // Configurações de posicionamento fixo
+    const posicoesConfig = {
+      'red': {
+        chapeu:   { width: '310px', top: '137px',  left: '51.4%' },
+        oculos:   { width: '110px', top: '200px',  left: '51.4%' },
+        nariz:    { width: '100px', top: '360px',  left: '50%' },
+        bico:     { width: '210px', top: '347px',  left: '51.7%' },
+        peitoral: { width: '200px', top: '550px',  left: '50%' }
+      },
+      'chuck': {
+        chapeu:   { width: '350px', top: '10px',   left: '52%' },
+        oculos:   { width: '280px', top: '300px',  left: '50%' },
+        nariz:    { width: '120px', top: '390px',  left: '50%' },
+        bico:     { width: '140px', top: '390px',  left: '50%' },
+        peitoral: { width: '220px', top: '580px',  left: '50%' }
+      }
+    };
+
+    // BANCO DE DADOS DOS ACESSÓRIOS (Listas geradas dinamicamente)
+    const itensDados = {
+      chapeu: {
+        idCamada: 'camada-chapeu',
+        idLabel: 'label-chapeu',
+        indexAtual: 0,
+        // Gera a lista de caminhos de 1 até 40
+        arquivos: [''].concat(Array.from({length: 40}, (_, i) => `RED/${i + 1}.svg`))
+      },
+      bico: {
+        idCamada: 'camada-bico',
+        idLabel: 'label-bico',
+        indexAtual: 0,
+        // Gera a lista de caminhos de 1 até 14
+        arquivos: [''].concat(Array.from({length: 14}, (_, i) => `red_bicos/${i + 1}.svg`))
+      }
+    };
+
+    let personagemAtivo = 'red';
+
+    // FUNÇÃO QUE CONTROLA O PASSO A PASSO DAS SETAS
+    function mudarItem(categoria, direcao) {
+      const cat = itensDados[categoria];
+      
+      // Atualiza o índice respeitando os limites (vai pro fim ou volta pro começo)
+      cat.indexAtual += direcao;
+      if (cat.indexAtual < 0) {
+        cat.indexAtual = cat.arquivos.length - 1;
+      } else if (cat.indexAtual >= cat.arquivos.length) {
+        cat.indexAtual = 0;
+      }
+
+      const arquivoAcessorio = cat.arquivos[cat.indexAtual];
+      const camada = document.getElementById(cat.idCamada);
+      const label = document.getElementById(cat.idLabel);
+
+      if (cat.indexAtual === 0) {
+        // Posição 0 significa "Nenhum"
+        camada.src = '';
+        camada.style.display = 'none';
+        label.innerText = 'Nenhum';
+      } else {
+        camada.src = arquivoAcessorio;
+        camada.style.display = 'block';
+        label.innerText = `Item ${cat.indexAtual}`;
+      }
+    }
+
+    function colocarItem(idCamada, arquivoAcessorio) {
+      const camada = document.getElementById(idCamada);
+      camada.src = arquivoAcessorio;
+      camada.style.display = 'block';
+    }
+
+    function tirarItem(idCamada) {
+      const camada = document.getElementById(idCamada);
+      camada.src = '';
+      camada.style.display = 'none';
+    }
+
+    function trocarPersonagem(nomePersonagem, tamanhoCorpo) {
+      personagemAtivo = nomePersonagem;
+      
+      const corpo = document.getElementById('camada-corpo');
+      corpo.src = nomePersonagem + '.webp';
+      corpo.style.width = tamanhoCorpo;
+      
+      aplicarLayoutAcessorios();
+    }
+
+    function aplicarLayoutAcessorios() {
+      const config = posicoesConfig[personagemAtivo];
+      const mapeamento = [
+        { chave: 'chapeu', id: 'camada-chapeu' },
+        { chave: 'oculos', id: 'camada-oculos' },
+        { chave: 'nariz', id: 'camada-nariz' },
+        { chave: 'bico',   id: 'camada-bico' },
+        { chave: 'peitoral', id: 'camada-peitoral' }
+      ];
+
+      mapeamento.forEach(item => {
+        const elementoHTML = document.getElementById(item.id);
+        const dadosEstilo = config[item.chave];
+
+        if (elementoHTML && dadosEstilo) {
+          elementoHTML.style.width = dadosEstilo.width;
+          elementoHTML.style.top = dadosEstilo.top;
+          elementoHTML.style.left = dadosEstilo.left;
+        }
+      });
+    }
+
+    window.onload = function() {
+      aplicarLayoutAcessorios();
+    };
+
+    function baixarPNG() {
+      const areaAvatar = document.getElementById('area-do-avatar');
+      html2canvas(areaAvatar, { scale: 2 }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'meu-avatar.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    }
+  </script>
+
+</body>
+</html>
